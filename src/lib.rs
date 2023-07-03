@@ -5,4 +5,5 @@
 //! and mark them so that can pick them out and render them properly.
 //!
 //! [nostr]: https://github.com/nostr-protocol/nostr
+pub mod parser;
 pub mod shard;
