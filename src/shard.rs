@@ -1,26 +1,41 @@
 use crate::parser::{Bound, Error, Parser, Result};
 use log::debug;
 
+/// A slice into the original buffer. Contains a position, which is an
+/// index into the buffer, and the length of the segment.
 #[derive(Debug, PartialEq, Eq)]
 pub struct ByteSlice {
-    pos: usize,
-    len: usize,
+    pos: u32,
+    len: u32,
 }
 
 impl ByteSlice {
-    pub fn new(pos: usize, len: usize) -> ByteSlice {
+    pub fn new(pos: u32, len: u32) -> ByteSlice {
         ByteSlice { pos, len }
     }
 
-    pub fn bytes<'a>(&self, data: &'a [u8]) -> &'a [u8] {
-        &data[self.pos..self.pos + self.len]
+    #[inline(always)]
+    fn pos_usize(&self) -> usize {
+        self.pos as usize
     }
 
-    pub fn str<'a>(&self, data: &'a [u8]) -> Option<&'a str> {
-        std::str::from_utf8(self.bytes(data)).ok()
+    #[inline(always)]
+    fn len_usize(&self) -> usize {
+        self.len as usize
+    }
+
+    /// Get the slice of the buffer as a native array slice
+    pub fn bytes<'a>(&self, data: &'a [u8]) -> &'a [u8] {
+        &data[self.pos_usize()..self.pos_usize() + self.len_usize()]
+    }
+
+    /// Get the slice of the buffer as a string
+    pub fn str<'a>(&self, data: &'a [u8]) -> std::result::Result<&'a str, std::str::Utf8Error> {
+        std::str::from_utf8(self.bytes(data))
     }
 }
 
+/// A Shard represents a part of the shattered content.
 #[derive(Debug, PartialEq, Eq)]
 pub enum Shard {
     Text(ByteSlice),
@@ -45,6 +60,7 @@ impl Shards {
         }
     }
 
+    /// Parse a hashtag (content after the #)
     pub fn parse_hashtag(parser: &mut Parser) -> Result<ByteSlice> {
         let start = parser.pos();
         match parser.parse_until(is_boundary_char) {
@@ -54,7 +70,7 @@ impl Shards {
                 if len <= 0 {
                     return Err(Error::NotFound);
                 }
-                return Ok(ByteSlice::new(start, len));
+                return Ok(ByteSlice::new(start as u32, len as u32));
             }
             Err(err) => Err(err.into()),
         }
@@ -66,7 +82,7 @@ impl Shards {
             return;
         }
 
-        let txt_slice = ByteSlice::new(start, len);
+        let txt_slice = ByteSlice::new(start as u32, len as u32);
         /*
         debug!(
             "pushing text block {:?} @ {} '{:?}'",
@@ -78,6 +94,7 @@ impl Shards {
         self.shards.push(Shard::Text(txt_slice));
     }
 
+    /// Parse (shatter) content into shards
     pub fn parse(content: &str) -> Result<Shards> {
         let mut parser = Parser::from_str(content);
         let len = parser.len();
