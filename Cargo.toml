@@ -2,6 +2,7 @@
 name = "shatter"
 version = "0.1.0"
 edition = "2021"
+authors = ["William Casarin <jb55@jb55.com>"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
