@@ -5,6 +5,8 @@ edition = "2021"
 authors = ["William Casarin <jb55@jb55.com>"]
 license = "MIT"
 description = "A fast, zero-copy nostr content parser"
+repository = "https://github.com/damus-io/shatter"
+keywords = ["nostr"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
