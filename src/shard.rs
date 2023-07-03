@@ -2,7 +2,7 @@ use crate::parser::{Bound, Error, Parser, Result};
 use log::debug;
 
 #[derive(Debug, PartialEq, Eq)]
-struct ByteSlice {
+pub struct ByteSlice {
     pos: usize,
     len: usize,
 }
@@ -22,7 +22,7 @@ impl ByteSlice {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-enum Shard {
+pub enum Shard {
     Text(ByteSlice),
     Mention(ByteSlice),
     Hashtag(ByteSlice),
@@ -32,13 +32,13 @@ enum Shard {
 }
 
 #[derive(Debug)]
-struct Shards {
+pub struct Shards {
     shards: Vec<Shard>,
     num_words: i32,
 }
 
 impl Shards {
-    fn new() -> Shards {
+    pub fn new() -> Shards {
         Shards {
             // some initial capacity so we don't have to allocate on small parses
             shards: Vec::with_capacity(32),
@@ -46,7 +46,7 @@ impl Shards {
         }
     }
 
-    fn parse_hashtag(parser: &mut Parser) -> Result<ByteSlice> {
+    pub fn parse_hashtag(parser: &mut Parser) -> Result<ByteSlice> {
         let start = parser.pos();
         match parser.parse_until(is_boundary_char) {
             Ok(()) | Err(Error::OutOfBounds(Bound::End)) => {
