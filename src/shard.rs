@@ -40,7 +40,8 @@ struct Shards {
 impl Shards {
     fn new() -> Shards {
         Shards {
-            shards: vec![],
+            // some initial capacity so we don't have to allocate on small parses
+            shards: Vec::with_capacity(32),
             num_words: 0,
         }
     }
