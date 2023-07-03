@@ -1,5 +1,7 @@
 /target
 .direnv
+.buildcmd
+.build-result
 
 
 # Added by cargo
