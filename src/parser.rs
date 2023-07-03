@@ -1,5 +1,3 @@
-
-
 #[derive(Debug, PartialEq, Eq)]
 pub struct Parser<'a> {
     data: &'a [u8],
@@ -119,7 +117,7 @@ impl<'a> Parser<'a> {
 
     pub fn peek_prev_char(&self) -> Result<char> {
         let mut i = 1;
-        let mut codepoint = 0u32;
+        let codepoint: u32;
         let mut bs: [u32; 4] = [0; 4];
 
         if self.pos == 0 {

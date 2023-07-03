@@ -34,7 +34,7 @@ pub enum Shard {
 #[derive(Debug)]
 pub struct Shards {
     shards: Vec<Shard>,
-    num_words: i32,
+    //num_words: i32,
 }
 
 impl Shards {
@@ -42,7 +42,6 @@ impl Shards {
         Shards {
             // some initial capacity so we don't have to allocate on small parses
             shards: Vec::with_capacity(32),
-            num_words: 0,
         }
     }
 
@@ -113,26 +112,11 @@ impl Shards {
     }
 }
 
-fn is_boundary(r: &Result<char>) -> bool {
-    match r {
-        Err(Error::OutOfBounds(_)) => true,
-        Err(_) => false,
-        Ok(c) => is_boundary_char(*c),
-    }
-}
-
 fn is_left_boundary(r: &Result<u8>) -> bool {
     match r {
         Err(Error::OutOfBounds(_)) => true,
         Err(_) => false,
         Ok(c) => is_left_boundary_char(*c),
-    }
-}
-
-fn is_eof<T>(r: &Result<T>) -> bool {
-    match r {
-        Err(Error::OutOfBounds(Bound::End)) => true,
-        _ => false,
     }
 }
 
@@ -150,6 +134,14 @@ mod test {
     use std::sync::Once;
 
     static INIT: Once = Once::new();
+
+    fn is_boundary(r: &Result<char>) -> bool {
+        match r {
+            Err(Error::OutOfBounds(_)) => true,
+            Err(_) => false,
+            Ok(c) => is_boundary_char(*c),
+        }
+    }
 
     /// Setup function that is only run once, even if called multiple times.
     fn setup() {
