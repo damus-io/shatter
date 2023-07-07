@@ -35,11 +35,21 @@ impl ByteSlice {
     }
 }
 
+/// A nostr mention: nostr:bech32... #[0]... etc
+#[derive(Debug, PartialEq, Eq)]
+pub enum Mention {
+    /// A tag mention #[1], etc
+    Index(u16),
+    /// A nostr: mention, starting from the start of the bech32 string to
+    /// the end It is not parsed at this point to keep things lazy and quick
+    Bech32(ByteSlice),
+}
+
 /// A Shard represents a part of the shattered content.
 #[derive(Debug, PartialEq, Eq)]
 pub enum Shard {
     Text(ByteSlice),
-    Mention(ByteSlice),
+    Mention(Mention),
     Hashtag(ByteSlice),
     Url(ByteSlice),
     //Invoice(Invoice)
