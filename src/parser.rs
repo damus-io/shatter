@@ -251,8 +251,17 @@ impl<'a> Parser<'a> {
     pub fn parse_until<F: Fn(char) -> bool>(&mut self, matches: F) -> Result<()> {
         let len = self.len();
         while self.pos < len {
+            let byte = self.data[self.pos];
             let prev = self.pos;
-            if matches(self.pull_char()?) {
+
+            let chr = if is_utf8(byte) {
+                self.pull_char()?
+            } else {
+                self.pos += 1;
+                byte as char
+            };
+
+            if matches(chr) {
                 self.pos = prev;
                 return Ok(());
             }
@@ -324,4 +333,9 @@ mod test {
         assert_eq!(parser.peek_char(), Ok('.'));
         Ok(())
     }
+}
+
+#[inline(always)]
+fn is_utf8(byte: u8) -> bool {
+    (byte & 0x80) == 0x80
 }
