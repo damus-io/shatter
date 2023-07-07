@@ -70,12 +70,26 @@ impl Shards {
         }
     }
 
+    /// Parse an indexed mention (#[0], etc)
+    fn parse_indexed_mention(parser: &mut Parser) -> Result<u16> {
+        let start = parser.pos();
+        {
+            parser.parse_char('[')?;
+            let ind = parser.parse_digits()?;
+            parser.parse_char(']')?;
+            Ok(ind)
+        }
+        .map_err(|err| {
+            parser.set_pos(start);
+            err
+        })
+    }
+
     /// Parse a hashtag (content after the #)
-    pub fn parse_hashtag(parser: &mut Parser) -> Result<ByteSlice> {
+    fn parse_hashtag(parser: &mut Parser) -> Result<ByteSlice> {
         let start = parser.pos();
         match parser.parse_until(is_boundary_char) {
             Ok(()) | Err(Error::OutOfBounds(Bound::End)) => {
-                debug!("got to hashtag boundary @ {}", parser.pos());
                 let len = parser.pos() - start;
                 if len <= 0 {
                     return Err(Error::NotFound);
@@ -118,18 +132,16 @@ impl Shards {
             parser.set_pos(parser.pos() + 1);
 
             if c1 == '#' && prev_boundary {
-                match Shards::parse_hashtag(&mut parser) {
-                    Ok(ht) => {
-                        shards.push_txt(start, before_parse);
-                        start = parser.pos();
-
-                        debug!("pushing hashtag {:?}", ht);
-                        shards.shards.push(Shard::Hashtag(ht));
-                    }
-
-                    Err(err) => {
-                        debug!("failed parsing hashtag @ {}: {:?}", parser.pos(), err);
-                    }
+                if let Ok(ht) = Shards::parse_hashtag(&mut parser) {
+                    shards.push_txt(start, before_parse);
+                    start = parser.pos();
+                    debug!("pushing hashtag {:?}", ht);
+                    shards.shards.push(Shard::Hashtag(ht));
+                } else if let Ok(ind) = Shards::parse_indexed_mention(&mut parser) {
+                    shards.push_txt(start, before_parse);
+                    start = parser.pos();
+                    debug!("pushing indexed mention {:?}", ind);
+                    shards.shards.push(Shard::Mention(Mention::Index(ind)));
                 }
             }
         }
@@ -246,6 +258,20 @@ mod test {
         assert_eq!(bs.len(), 2);
         assert_eq!(bs[0], Shard::Text(ByteSlice::new(0, 1)));
         assert_eq!(bs[1], Shard::Hashtag(ByteSlice::new(2, 3)));
+    }
+
+    #[test]
+    fn test_indexed_mention() {
+        setup();
+
+        let content = "this is #[19] #[1 a mention";
+        debug!("test_indexed_mention '{}'", content);
+        let shards = Shards::parse(content).unwrap();
+        let bs = shards.shards;
+        assert_eq!(bs.len(), 3);
+        assert_eq!(bs[0], Shard::Text(ByteSlice::new(0, 8)));
+        assert_eq!(bs[1], Shard::Mention(Mention::Index(19)));
+        assert_eq!(bs[2], Shard::Text(ByteSlice::new(13, 14)));
     }
 
     #[test]
