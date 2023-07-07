@@ -88,6 +88,35 @@ impl<'a> Parser<'a> {
         self.skip(|c| c.is_ascii_whitespace())
     }
 
+    pub fn parse_digits(&mut self) -> Result<u16> {
+        let mut i = self.pos();
+        let mut digits = 0u16;
+        let mut number = 0u16;
+
+        while i < self.len() {
+            let byte = self.data()[i];
+
+            // if it's a utf8 char this is not a digit
+            if (byte & 0x80) == 0x80 || !(byte as char).is_ascii_digit() || digits == 5 {
+                break;
+            }
+
+            let digit = (byte - b'0') as u16;
+
+            number = number.saturating_mul(10).saturating_add(digit);
+
+            digits += 1;
+            i += 1;
+        }
+
+        if digits == 0 || digits > 5 {
+            return Err(Error::NotFound);
+        }
+
+        self.set_pos(i);
+        Ok(number)
+    }
+
     pub fn peek_char(&mut self) -> Result<char> {
         let peek = true;
         self.pull_or_peek_char(peek)
@@ -246,6 +275,17 @@ mod test {
         assert_eq!(res, Ok(()));
         assert_eq!(parser.pos, 6);
         Ok(())
+    }
+
+    #[test]
+    fn test_parse_digits() {
+        let s = "[1315]";
+        let mut parser = Parser::from_str(s);
+        let r1 = parser.parse_char('[');
+        assert_eq!(r1, Ok(()));
+        let r2 = parser.parse_digits();
+        assert_eq!(r2, Ok(1315));
+        assert_eq!(parser.pos(), 5);
     }
 
     #[test]
