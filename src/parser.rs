@@ -117,6 +117,17 @@ impl<'a> Parser<'a> {
         Ok(number)
     }
 
+    /// Parser a specific character. If not found, do not advance the parser.
+    pub fn parse_char(&mut self, matching: char) -> Result<()> {
+        let start = self.pos();
+        let c = self.pull_char()?;
+        if c == matching {
+            return Ok(());
+        }
+        self.set_pos(start);
+        return Err(Error::NotFound);
+    }
+
     pub fn peek_char(&mut self) -> Result<char> {
         let peek = true;
         self.pull_or_peek_char(peek)
